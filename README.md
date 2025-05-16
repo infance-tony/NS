@@ -33,93 +33,198 @@ public class DESExample {
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 
-public class AESExample {
-    public static void main(String[] args) throws Exception {
-        String data = "SecureData";
+public class SimpleAES {
 
+    // Generate AES secret key
+    public static SecretKey generateKey() throws Exception {
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-        keyGen.init(128);
-        SecretKey key = keyGen.generateKey();
+        keyGen.init(128); // AES-128
+        return keyGen.generateKey();
+    }
 
+    // Encrypt a plain text using AES
+    public static String encrypt(String plainText, SecretKey secretKey) throws Exception {
         Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
+        return Base64.getEncoder().encodeToString(encryptedBytes);
+    }
 
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        byte[] encrypted = cipher.doFinal(data.getBytes());
-        System.out.println("Encrypted: " + Base64.getEncoder().encodeToString(encrypted));
+    // Decrypt an encrypted text using AES
+    public static String decrypt(String encryptedText, SecretKey secretKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);
+        byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+        return new String(decryptedBytes);
+    }
 
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        byte[] decrypted = cipher.doFinal(encrypted);
-        System.out.println("Decrypted: " + new String(decrypted));
+    // Example usage
+    public static void main(String[] args) {
+        try {
+            String plainText = "Hello, Symmetric World!";
+            SecretKey secretKey = generateKey();
+
+            String encrypted = encrypt(plainText, secretKey);
+            String decrypted = decrypt(encrypted, secretKey);
+
+            System.out.println("Original Text: " + plainText);
+            System.out.println("Encrypted Text: " + encrypted);
+            System.out.println("Decrypted Text: " + decrypted);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
+
 ```
 
 
 ## 3. Key Exchange (Diffie-Hellman)
 
 ```java
-import javax.crypto.KeyAgreement;
-import javax.crypto.interfaces.DHPublicKey;
-import javax.crypto.spec.DHParameterSpec;
-import java.security.*;
-
-public class KeyExchangeExample {
-    public static void main(String[] args) throws Exception {
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH");
-        kpg.initialize(512);
-        KeyPair kp1 = kpg.generateKeyPair();
-
-        KeyAgreement ka1 = KeyAgreement.getInstance("DH");
-        ka1.init(kp1.getPrivate());
-
-        KeyPairGenerator kpg2 = KeyPairGenerator.getInstance("DH");
-        DHParameterSpec dhParamSpec = ((DHPublicKey) kp1.getPublic()).getParams();
-        kpg2.initialize(dhParamSpec);
-        KeyPair kp2 = kpg2.generateKeyPair();
-
-        KeyAgreement ka2 = KeyAgreement.getInstance("DH");
-        ka2.init(kp2.getPrivate());
-
-        ka1.doPhase(kp2.getPublic(), true);
-        ka2.doPhase(kp1.getPublic(), true);
-
-        byte[] sharedSecret1 = ka1.generateSecret();
-        byte[] sharedSecret2 = ka2.generateSecret();
-
-        System.out.println(java.util.Arrays.equals(sharedSecret1, sharedSecret2) ?
-                "Shared keys are equal" : "Keys are not equal");
+import java.util.*;
+class DiffieHellmanAlgorithmExample {
+    public static void main(String[] args) {
+        long P, G, x, a, y, b, ka, kb;
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Both the users should be agreed upon the public keys G and P");
+        System.out.println("Enter value for public key G:");
+        G = sc.nextLong();
+        System.out.println("Enter value for public key P:");
+        P = sc.nextLong();
+        System.out.println("Enter value for private key a selected by user1:");
+        a = sc.nextLong();
+        System.out.println("Enter value for private key b selected by user2:");
+        b = sc.nextLong();
+        x = calculatePower(G, a, P);
+        y = calculatePower(G, b, P);
+        ka = calculatePower(y, a, P);
+        kb = calculatePower(x, b, P);
+        System.out.println("Secret key for User1 is:" + ka);
+        System.out.println("Secret key for User2 is:" + kb);
+    }
+    private static long calculatePower(long x, long y, long P) {
+        long result = 0;
+        if (y == 1) {
+            return x;
+        } else {
+            result = ((long)Math.pow(x, y)) % P;
+            return result;
+        }
     }
 }
+
 ```
 
 
 ## 4. RSA (HTML + JavaScript)
 
 ```html
-<!DOCTYPE html>
+
 <html>
-<head><title>RSA</title></head>
+
+<head>
+    <title>RSA Encryption</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
 <body>
-<script>
-async function rsaDemo() {
-    const key = await window.crypto.subtle.generateKey(
-        {name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256"},
-        true,
-        ["encrypt", "decrypt"]
-    );
+    <center>
+        <h1>RSA Algorithm</h1>
+        <h2>Implemented Using HTML & Javascript</h2>
+        <hr>
+        <table>
+            <tr>
+                <td>Enter First Prime Number:</td>
+                <td>
+                    <input type="number" value="53" id="p">
+                </td>
+            </tr>
+            <tr>
+                <td>Enter Second Prime Number:</td>
+                <td>
+                    <input type="number" value="59" id="q">
+                    </p>
+                </td>
+            </tr>
 
-    const data = new TextEncoder().encode("Hello RSA!");
-    const encrypted = await crypto.subtle.encrypt({name: "RSA-OAEP"}, key.publicKey, data);
-    const decrypted = await crypto.subtle.decrypt({name: "RSA-OAEP"}, key.privateKey, encrypted);
+            <tr>
+                <td>Enter the Message(cipher text):
+                    <br>[A=1, B=2,...]</td>
+                <td>
+                    <input type="number" value="89" id="msg">
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>Public Key:</td>
+                <td>
+                    <p id="publickey"></p>
+                </td>
+            </tr>
+            <tr>
+                <td>Exponent:</td>
+                <td>
+                    <p id="exponent"></p>
+                </td>
+            </tr>
+            <tr>
+                <td>Private Key:</td>
+                <td>
+                    <p id="privatekey"></p>
+                </td>
+            </tr>
+            <tr>
+                <td>Cipher Text:</td>
+                <td>
+                    <p id="ciphertext"></p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button onclick="RSA();">Apply RSA</button>
+                </td>
+            </tr>
+        </table>
+    </center>
 
-    console.log("Encrypted:", new Uint8Array(encrypted));
-    console.log("Decrypted:", new TextDecoder().decode(decrypted));
-}
-rsaDemo();
-</script>
 </body>
+<script type="text/javascript">
+    function RSA() {
+    var gcd, p, q, no, n, t, e, i, x;
+    gcd = function (a, b) { return (!b) ? a : gcd(b, a % b); };
+    p = document.getElementById('p').value;
+    q = document.getElementById('q').value;
+    no = document.getElementById('msg').value;
+    n = p * q;
+    t = (p - 1) * (q - 1);
+    for (e = 2; e < t; e++) {
+    if (gcd(e, t) == 1) {
+    break;
+    }
+    }
+    for (i = 0; i < 10; i++) {
+    x = 1 + i * t
+    if (x % e == 0) {
+    d = x / e;
+    break;
+    }
+    }
+    ctt = Math.pow(no, e).toFixed(0);
+    ct = ctt % n;
+    dtt = Math.pow(ct, d).toFixed(0);
+    dt = dtt % n;
+    document.getElementById('publickey').innerHTML = n;
+    document.getElementById('exponent').innerHTML = e;
+    document.getElementById('privatekey').innerHTML = d;
+    document.getElementById('ciphertext').innerHTML = ct;
+    }
+</script>
+
 </html>
 ```
 
